@@ -1,0 +1,37 @@
+---
+title: "TestExtractSnpFreq"
+author: "Winfield Lai"
+date: "January 7, 2020"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+rm(list = ls())
+library(dplyr)
+```
+
+
+
+```{r cars, echo = TRUE, include = TRUE}
+source("../SourceCode/ExtractSnpBivarFreq.R")
+```
+
+## Slide with Plot
+
+```{r pressure}
+p1A <- 0.1
+p2A <- 0.15
+bin1 <- rbinom(n = 100000, size = 2, prob = p1A)
+bin2 <- rbinom(n = 100000, size = 2, prob = p2A)
+binMat <- cbind(bin1, bin2)
+df <- extractSnpBivarDfVec(binMat, p1A, p2A)
+df %>% t
+```
+
+```{r}
+dft <- df %>% t
+
+plot(dft[c(1:9),1], dft[c(10:18),1])
+abline(0,1)
+```

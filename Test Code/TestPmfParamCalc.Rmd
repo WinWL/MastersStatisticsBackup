@@ -1,0 +1,82 @@
+---
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+rm(list = ls())
+library(dplyr)
+```
+
+
+
+```{r, echo = TRUE, include = TRUE}
+source("../SourceCode/CalcRandomizeParamPmf.R")
+source("../SourceCode/calcPmfParam3Snp.R")
+```
+
+
+
+```{r}
+p1 <- 0.1; p2 <- 0.12; p3 <- 0.15
+t12 <- 0.1; t13 <- 0.13; t23 <- 0.15
+
+pAllele <- c(p1, p2, p3)
+matTarCor <- diag(3)
+matTarCor[upper.tri(matTarCor)] <- c(t12,t13,t23)
+matTarCor[lower.tri(matTarCor)] <- c(t12,t13,t23)
+
+# 
+extMatMarginal <- calcMatMarginal(3, pAllele)
+extMatTarCor <- calcMatTargetCor(3, matTarCor, pAllele)
+extMatCons <- rbind(extMatMarginal, extMatTarCor)
+
+# Code used in calcPmfParam3Snp, the matrices involved.
+# We're checking if the matrices used in calcPmfParam3Snp and 
+# those produced by the above 2 functions are the same 
+# Calculate the expected value and variances
+p1var <- 2*p1*(1-p1)
+p1exp <- 2*p1
+p2var <- 2*p2*(1-p2)
+p2exp <- 2*p2
+p3var <- 2*p3*(1-p3)
+p3exp <- 2*p3
+
+lhsmat <- matrix(c(
+  1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, # SNP1 = 0
+  0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0, # SNP1 = 1
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0, # SNP1 = 2
+  1,1,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0, # SNP2 = 0
+  0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,0,0,0,0, # SNP2 = 1
+  0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,0, # SNP2 = 2
+  1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0, # SNP3 = 0
+  0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0, # SNP3 = 1
+  0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0, # SNP3 = 2
+  0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,2,2,2,0,0,0,2,2,2,4,4,4,0, # t12
+  0,0,0,0,0,0,0,0,0,0,1,2,0,1,2,0,1,2,0,2,4,0,2,4,0,2,4,0, # t13
+  0,0,0,0,1,2,0,2,4,0,0,0,0,1,2,0,2,4,0,0,0,0,1,2,0,2,4,0, # t23
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1  # sum of all values = 1
+), nrow = 13, byrow = T)
+
+rhsOfeXYt12 <- t12*sqrt(p1var*p2var) + p1exp*p2exp
+rhsOfeXYt13 <- t13*sqrt(p1var*p3var) + p1exp*p3exp
+rhsOfeXYt23 <- t23*sqrt(p2var*p3var) + p2exp*p3exp
+
+rhs <- c(
+  (1 - p1)^2, 2*(1 - p1)*p1, p1^2,
+  (1 - p2)^2, 2*(1 - p2)*p2, p2^2, 
+  (1 - p3)^2, 2*(1 - p3)*p3, p3^2, 
+  rhsOfeXYt12,
+  rhsOfeXYt13, 
+  rhsOfeXYt23,
+  1
+)
+
+constMat3SnpExtra <- cbind(lhsmat, rhs)
+constMat3Snp <- constMat3SnpExtra[-13, -28] #Remove the row and column associated to the unity constraint. Not needed in comparision here
+
+# If the matrices are the same, then the subtraction should produce the zero matrix
+res <- constMat3Snp - extMatCons
+res
+all.equal(sum(abs(res)), 0) 
+```

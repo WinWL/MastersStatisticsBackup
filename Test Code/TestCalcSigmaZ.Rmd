@@ -1,0 +1,120 @@
+---
+title: "TransNormToBinTest"
+author: "Winfield Lai"
+date: "January 10, 2020"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(fig.height = 8)
+knitr::opts_chunk$set(fig.width  = 12)
+
+# rm(list = ls())
+library(dplyr)
+library(mvtnorm)
+library(MASS)
+library(gtools)
+library(ggplot2)
+library(reshape2)
+library(ggthemes)
+```
+
+
+```{r include = TRUE}
+source("../SourceCode/SolveMadsenSigmaEqn.R")
+```
+
+```{r}
+plotCalcNormCorVsTargetBinCor <- function(dfPlot, 
+                                          xl = "Target Correlation", 
+                                          yl = "Entry in Correlation Matrix For Multivaraite Normal", 
+                                          tl = "Comparing Binomial Target Correlation vs Correlation Used in Multivariate Normal Matrix") {
+  ggplot(dfPlot, aes(x = TargetCorre, y = value, color = variable)) +
+  geom_point(alpha = 0.5, size = 5)+
+  xlab(xl) +
+  ylab(yl) +
+  ggtitle(tl) +
+  theme(axis.line=element_line()) + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) 
+}
+```
+
+```{r}
+corDesire <- seq(0,1, by = 0.05)
+CalcNormCorChangingInterval <- function(iinter = c(-1,1)){
+  # Set up the p alleles and correlations to test
+  corDesire <- seq(0,1, by = 0.05)
+  pAlleleChoices <- c(0.01, 0.1, 0.15)
+  p12Choice.clean <- combinations(n = length(pAlleleChoices), v = pAlleleChoices, r = 2, repeats.allowed = F) %>% t()
+  p12Choice.clean <- cbind(p12Choice.clean, c(0.10,0.10))
+  
+  # Iterate over the chosen alleles and calculate the solved result from the equations
+  dfCalcSig <- apply(p12Choice.clean, 2, function(pp){
+    pI <- pp[1]; pJ <- pp[2]
+    nI <- 2; nJ <- 2
+    sigmaI2 <- pI * nI * (1 - pI)
+    sigmaJ2 <- pJ * nJ * (1 - pJ)
+    uI <- nI * pI
+    uJ <- nJ * pJ
+    
+    # Calculate the sigma that's given to the correlation matrix of the multivariate normal
+    solvedResult <- sapply(corDesire, function(corD){
+      solveSigmaEqnForNormToBin(corD, sigmaI2, sigmaJ2, uI, uJ, nI, nJ, pI, pJ, inter = iinter)
+    })
+    
+    return(solvedResult)
+  })
+  colnames(dfCalcSig) <- apply(p12Choice.clean, 2, function(pp) paste(pp[1], pp[2]))
+  dfCalcSig <- dfCalcSig %>% as.data.frame()
+  dfCalcSig$TargetCorre <- corDesire
+  return(dfCalcSig)
+}
+```
+
+
+### Range from -1 to 1
+```{r}
+# Calculate the sigma that's given to the correlation matrix of the multivariate normal
+# See above function to know which correlations and p alleles are being iterated over 
+dfCalcSig11 <- CalcNormCorChangingInterval(c(-1,1))
+
+#####
+# Plot
+dfPlotCorre <- melt(dfCalcSig11, id.vars = c("TargetCorre"))
+plotCalcNormCorVsTargetBinCor(dfPlotCorre)
+```
+
+## Range from -3 to 7.4
+```{r}
+# Calculate the sigma that's given to the correlation matrix of the multivariate normal
+# See above function to know which correlations and p alleles are being iterated over 
+dfCalcSig374 <- CalcNormCorChangingInterval(c(-3,7.4))
+
+#####
+# Plot
+dfPlotCorre <- melt(dfCalcSig374, id.vars = c("TargetCorre"))
+plotCalcNormCorVsTargetBinCor(dfPlotCorre)
+```
+
+## Checking -1 to 1 and -3 to 7.4
+```{r}
+dfDiff <- dfCalcSig11 - dfCalcSig374
+dfDiff$TargetCorre <- corDesire
+dfPlotCorre <- melt(dfDiff, id.vars = c("TargetCorre"))
+plotCalcNormCorVsTargetBinCor(dfPlotCorre, yl = "Difference", 
+                              tl = "Difference Between using Intervals -1 to 1 and -3 to 7.4 to Calculate Sigma")
+```
+
+## Range from -3 to 7.473
+```{r}
+# Calculate the sigma that's given to the correlation matrix of the multivariate normal
+# See above function to know which correlations and p alleles are being iterated over 
+dfCalcSig37473 <- CalcNormCorChangingInterval(c(-3,7.473))
+
+#####
+# Plot
+dfPlotCorre <- melt(dfCalcSig37473, id.vars = c("TargetCorre"))
+plotCalcNormCorVsTargetBinCor(dfPlotCorre)
+```

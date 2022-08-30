@@ -1,0 +1,65 @@
+---
+title: "GeneticsLibraryTest"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(genetics)
+library(dplyr)
+library(LDheatmap)
+```
+
+```{r}
+example.nosep <- c("DD", "DI", "DD", "II", "DD",
+"DD", "DD", "DD", "II", "")
+g1 <- genotype(example.nosep, sep="")
+g1
+
+```
+
+```{r}
+g1 <- genotype( c('T/A', NA, 'T/T', NA, 'T/A', NA, 'T/T', 'T/A',
+'T/T', 'T/T', 'T/A', 'A/A', 'T/T', 'T/A', 'T/A', 'T/T',
+NA, 'T/A', 'T/A', NA) )
+
+g2 <- genotype( c('C/A', 'C/A', 'C/C', 'C/A', 'C/C', 'C/A', 'C/A', 'C/A',
+'C/A', 'C/C', 'C/A', 'A/A', 'C/A', 'A/A', 'C/A', 'C/C',
+'C/A', 'C/A', 'C/A', 'A/A') )
+
+g3 <- genotype( c('T/A', 'T/A', 'T/T', 'T/A', 'T/T', 'T/A', 'T/A', 'T/A',
+'T/A', 'T/T', 'T/A', 'T/T', 'T/A', 'T/A', 'T/A', 'T/T',
+'T/A', 'T/A', 'T/A', 'T/T') )
+
+# Compute LD on a single pair
+LD(g1,g2)
+
+# Compute LD table for all 3 genotypes
+data <- makeGenotypes(data.frame(g1,g2,g3))
+LD(data)
+
+LDheatmap(data)
+```
+```{r}
+g1 <- genotype( c('T/A', NA, 'T/T', NA, 'T/A', NA, 'T/T', 'T/A',
+'T/T', 'T/T', 'T/A', 'A/A', 'T/T', 'T/A', 'T/A', 'T/T',
+NA, 'T/A', 'T/A', NA) )
+
+g2 <- genotype( c('T/A', 'T/A', 'T/T', 'T/A', 'T/T', 'T/A', 'T/A', 'T/A',
+'T/A', 'T/T', 'T/A', 'A/A', 'T/A', 'A/A', 'T/A', 'T/T',
+'T/A', 'T/A', 'T/A', 'A/A') )
+
+g3 <- genotype( c('A/T', 'A/T', 'T/T', 'A/T', 'T/T', 'A/T', 'A/T', 'A/T',
+'A/T', 'T/T', 'A/T', 'T/T', 'A/T', 'A/T', 'A/T', 'T/T',
+'A/T', 'A/T', 'A/T', 'T/T') )
+
+# Compute LD on a single pair
+LD(g1,g2)
+
+# Compute LD table for all 3 genotypes
+data <- makeGenotypes(data.frame(g1,g2,g3))
+LD(data)
+
+LDheatmap(data)
+```
+
